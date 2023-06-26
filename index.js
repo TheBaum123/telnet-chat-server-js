@@ -26,7 +26,28 @@ server.on("connection", stream => {
             rooms.forEach((userRoom, userStream) => {
                 usedRooms.push(userRoom)
             })
+            usedRooms = [...new Set(usedRooms)]
             stream.write(usedRooms.join(", ") + "\n")
+        } else if(data == "/users" || data == "/list-users") {
+            let usedRooms = {}
+            rooms.forEach((userRoom, userStream) => {
+                if(usedRooms[userRoom]) {
+                    usedRooms[userRoom].push(names.get(userStream))
+                } else {
+                    usedRooms[userRoom] = [names.get(userStream)]
+                }
+            })
+            let output = []
+            for(let i = 0; i < Object.keys(usedRooms).length; i++) {
+                let room = Object.keys(usedRooms)[i]
+                output.push(`"${room}": `)
+                usedRooms[room].forEach(user => {
+                    output.push(`${user}, `)
+                })
+                output.push("\n")
+            }
+            output = output.join("")
+            stream.write(output)
         } else if(data.startsWith("/join") || data.startsWith("/room")) {
             let room = data.split(" ")
             room.shift()
